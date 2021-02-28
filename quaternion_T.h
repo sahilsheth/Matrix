@@ -60,9 +60,15 @@ public:
  friend bool operator==(const quaternion& q, const quaternion& r);
  friend bool operator!=(const quaternion& q, const quaternion& r);
  vector3d<T> vector() const;
- T scalar() const;
+ T scalar() const
+ {
+   return w;
+ }
 
- quaternion unit_scalar() const;
+ quaternion unit_scalar() const
+ {
+   return quaternion(1.0, vector());
+ }
 
  quaternion conjugate() const;
 
@@ -77,10 +83,34 @@ public:
 
  double angle(const quaternion& v) const;
 
- matrix3d<T> rot_matrix() const;
+
+ matrix3d<T> rot_matrix() const
+ {
+   T w = this->w, x = this->x, y=this->y, z=this->z;
+   //return matrix3d<T>("Rot", 3, 3, (-2 * ((pow(y,2))+pow(z,2)))+1, (2*(x*y - w*z)), (2*(x*z+w*y)), (2*(x*y+w*z)), (-2 * (pow(x,2)) + pow(z,2))
+   //T w = this->w, x = this->x, y = this->y, z = this->z;
+   return matrix3d<T>(3, (-2 * (pow(y, 2) + pow(z, 2)) + 1, 2 * (x*y  - w*z), 2 * (x*z  +  w*y), 2 * (x*y  + w*z), -2 * (pow(x, 2) + pow(z, 2)) + 1, 2 * (y*z  -  w*x), 2 * (x*z  - w*y), 2 * (y*z  + w*x), -2 * (pow(x, 2) + pow(y, 2)) + 1));
+ }
+
+ //T w = this->w, x = this->x, y = this->y, z = this->z;
+//   return matrix3d<T>("Rotation", 3, (-2 * (pow(y, 2) + pow(z, 2)) + 1,
+     //2 * (x*y  - w*z), 2 * (x*z  +  w*y), 2 * (x*y  + w*z),
+     //-2 * (pow(x, 2) + pow(z, 2)) + 1, 2 * (y*z  -  w*x),
+     //2 * (x*z  - w*y), 2 * (y*z  + w*x),
+     //-2 * (pow(x, 2) + pow(y, 2)) + 1));
 
  // rotates point pt (pt.x, pt.y, pt.z) about (axis.x, axis.y, axis.z) by theta
- static vec3 rotate(const vector3D& pt, const vector3D& axis, double theta);
+ static vec3 rotate(const vector3D& pt, const vector3D& axis, double theta)
+ {
+
+   double costheta2 = cos(theta/2.0);
+   double sintheta2 = sin(theta/2.0);
+   quaternion q = quaternion(costheta2, axis[1] * sintheta2, axis[2] * sintheta2, axis[3] * sintheta2);
+   quaternion qstar = quaternion(q.w, -q.x, -q.y, -q.z);
+   quaternion p = quaternion(0, pt[0], pt[1], pt[2]);
+   quaternion p_rot = q * p * qstar;
+   return vector3d<T>(p_rot.x, p_rot.y, p_rot.z);
+ }
 
  friend std::ostream& operator<<(std::ostream& os, const quaternion& q) {
    os << "Quat(";
@@ -214,4 +244,3 @@ void quaternion<T>::run_tests() {
 
 
 #endif /* quaternion_T_h */
-
